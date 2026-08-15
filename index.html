@@ -317,7 +317,7 @@ button:hover{background:#eef3f6;border-color:#aebcc5}.charitem:hover{background:
 </style>
 </head>
 <body>
-<header><h1>Atlante cronologico del <em>Furioso</em></h1><p class="subtitle"><em>Una mappa interattiva per visualizzare il rapporto tra il tempo della storia e l'ordine della narrazione nel poema.</em></p></header>
+<header><h1>Atlante temporale del <em>Furioso</em></h1><p class="subtitle"><em>Cronologia, narrazione e intreccio nell’</em>Orlando furioso</p></header>
 <main>
 <div class="settingsBar">
 <button class="settingsToggle" id="settingsToggle" type="button" aria-controls="settingsDrawer" aria-expanded="false"><svg aria-hidden="true" viewBox="0 0 18 18"><path d="M3 4.5h12M3 9h12M3 13.5h12M6 3v3M12 7.5v3M8 12v3"/></svg><span>Impostazioni</span></button>
@@ -342,7 +342,7 @@ button:hover{background:#eef3f6;border-color:#aebcc5}.charitem:hover{background:
   <div class="poemFilterActions">
     <button type="button" id="addPoemRange">＋ Intervallo</button>
     <button type="button" class="applyPoemFilter" id="applyPoemFilter">Applica</button>
-    <button type="button" id="resetPoemFilter">Reset</button>
+    <button type="button" id="resetPoemFilter">Reset canti</button>
     
   </div>
   <div class="poemFilterError" id="poemFilterError" aria-live="polite"></div>
@@ -353,7 +353,7 @@ button:hover{background:#eef3f6;border-color:#aebcc5}.charitem:hover{background:
   <div class="timeFilterActions">
     <button type="button" id="addTimeRange">＋ Intervallo</button>
     <button type="button" class="applyTimeFilter" id="applyTimeFilter">Applica</button>
-    <button type="button" id="resetTimeFilter">Reset</button>
+    <button type="button" id="resetTimeFilter">Reset tempo</button>
   </div>
   <div class="timeFilterError" id="timeFilterError" aria-live="polite"></div>
 </div>
@@ -862,7 +862,7 @@ setupReader();buildChars();buildLegend();render();
 (() => {
   'use strict';
 
-  const principalCharacterColors=new Map([['Orlando','#A30D0D'],['Rinaldo','#68783B'],['Astolfo','#C56832'],['Bradamante','#1C7E94'],['Ruggiero','#EdAE1A'],['Angelica','#91339E']]);
+  const principalCharacterColors=new Map([['Orlando','#8F0707'],['Rinaldo','#68783B'],['Astolfo','#C56832'],['Bradamante','#1C7E94'],['Ruggiero','#EdAE1A'],['Angelica','#91339E']]);
   const palette=['#3E7CB1','#2A8C82','#D4A72C','#6F63A6','#C76A2D','#7A8560','#5B8DB8','#4F9A72','#C58B2A','#7E5A9B','#B65F32','#8A7C55','#2F6F9F','#6E9B4F','#E0B44A','#5F6FA8','#D5793A','#6F8067','#6D9DC5','#3B8D6E','#B98324','#8063A5','#A9603A','#8E8864','#4F7F99','#7FA35B','#946112','#67518E','#C47B4F','#6D7C78','#3F8A9D','#5D8F7A','#C7A34C','#7563B0','#9B6A46','#7C8B92','#6C91BF','#2F7F6D','#E6B85C','#8D6A9F','#D18652','#8D7864','#2D7184','#8DA85A','#A97E35','#665B95','#B8743E','#6E7561','#799DBA','#4D8B63','#CC8F3D','#7D6BA8','#A66A4A','#7F8F7B','#507EA6','#6AA49A','#B89A55','#5967A0','#C28E63','#8A8872','#B64B4B','#A9473F','#C05A43','#9E4D55','#B65A5F','#A55246','#4A8FB3','#5A9A8C','#8A9C48','#C19A32','#B86B35','#6B72A8','#3C7992','#74915A'];
   const customCharacterColors=new Map();
   // null = tutti i personaggi scelti nel menu sono attivi; Set = sottoinsieme attivo dalla legenda.
@@ -2470,7 +2470,7 @@ function buildVisualizationData(raw, template){
     if(showCuts())return inflectedCount(allCuts,'stacco','stacchi');
     if(showBoiardo())return inflectedCount(allBoiardo,'connessione','connessioni');
     if(showContradictions())return inflectedCount(allContradictions,'incongruenza','incongruenze');
-    if(showAdditions())return inflectedCount(allAdditions,'aggiunta narrativa','aggiunte narrative');
+    if(showAdditions())return inflectedCount(allAdditions,'aggiunta','aggiunte');
     return '';
   }
   function defaultStatus(){
