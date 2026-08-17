@@ -890,7 +890,7 @@ function clearResume(){activeResumeId=null;document.querySelectorAll('.resumeLin
 function render(){const rows=filtered();buildSummary(rows);const S=size(),root=S.svg;root.innerHTML='';const sc=scales(S);drawAxes(root,S,sc);if(!state.selected.size||!rows.length){text(root,M.l+S.iw/2,M.t+S.ih/2,'Seleziona almeno un personaggio con dati visibili.','axisTitle');return}const visible=rows.filter(d=>d.x1>=state.view.n0&&d.x0<=state.view.n1&&d.storyEnd>=state.view.s0&&d.storyStart<=state.view.s1);const plot=svgEl('g',{'clip-path':'url(#clipPlot)'});root.append(plot);
  const spans=svgEl('g',{class:'segmentSpans'});plot.append(spans);if(state.intervals){for(const d of visible){const p0=pointFor(d,S,sc,d.x0,d.storyDay),p1=pointFor(d,S,sc,d.x1,d.storyDay);if(Math.hypot(p1.x-p0.x,p1.y-p0.y)>1.2)line(spans,p0.x,p0.y,p1.x,p1.y,'interval');if(d.extent==='durativo'){const a=pointFor(d,S,sc,(d.x0+d.x1)/2,d.storyStart),b=pointFor(d,S,sc,(d.x0+d.x1)/2,d.storyEnd);line(spans,a.x,a.y,b.x,b.y,`durationBar${d.durationEstimated?' estimated':''}`);spans.append(svgEl('circle',{cx:b.x,cy:b.y,r:3.1,class:'durationEnd'}))}}}
  drawResumeLinks(plot,S,sc);const marks=svgEl('g');plot.append(marks);const storyZoom=storyZoomFactor();const r=Math.max(3.6,Math.min(6.4,4.4+Math.log2(Math.max(1,storyZoom))*.22));for(const d of visible)drawMarker(marks,d,pointFor(d,S,sc),r);if(activeResumeId)activateResume(activeResumeId);
- const narrZoom=(FULL.n1-FULL.n0)/(state.view.n1-state.view.n0);document.getElementById('zoomReadout').textContent=`zoom narrazione ×${narrZoom.toFixed(1)} · storia ×${storyZoom.toFixed(1)}`;document.getElementById('chartStatus').textContent=`${fmt(visible.length)} segmenti metricamente ancorati nell’area · mesi di calendario: 28/30/31 giorni`;syncSwapAxesButton(S)}
+ const narrZoom=(FULL.n1-FULL.n0)/(state.view.n1-state.view.n0);document.getElementById('zoomReadout').textContent=`zoom narrazione ×${narrZoom.toFixed(1)} · storia ×${storyZoom.toFixed(1)}`;{const status=document.getElementById('chartStatus');if(status&&!status.dataset.githubStatus)status.textContent=`${fmt(visible.length)} segmenti metricamente ancorati nell’area · mesi di calendario: 28/30/31 giorni`}syncSwapAxesButton(S)}
 const MIN_STORY_SPAN_DAYS=4;
 function clampView(v){const wrapWidth=document.getElementById('svgwrap')?.clientWidth||1100;const plotWidth=Math.max(360,wrapWidth-M.l-M.r);const maxPxPerVerse=64;const minN=Math.max(8,plotWidth/maxPxPerVerse),fullStorySpan=Math.max(1e-9,FULL.s1-FULL.s0),minS=Math.min(MIN_STORY_SPAN_DAYS,fullStorySpan);let ns=Math.max(minN,Math.min(FULL.n1-FULL.n0,v.n1-v.n0)),ss=Math.max(minS,Math.min(fullStorySpan,v.s1-v.s0));let n0=v.n0,n1=n0+ns,s0=v.s0,s1=s0+ss;if(n0<FULL.n0){n1+=FULL.n0-n0;n0=FULL.n0}if(n1>FULL.n1){n0-=n1-FULL.n1;n1=FULL.n1}if(s0<FULL.s0){s1+=FULL.s0-s0;s0=FULL.s0}if(s1>FULL.s1){s0-=s1-FULL.s1;s1=FULL.s1}return{n0,n1,s0,s1}}
 function zoomAt(factor,mode,cn=.5,cs=.5){const v=state.view,n={...v};if(mode==='both'||mode==='narr'){const span=(v.n1-v.n0)*factor,center=v.n0+(v.n1-v.n0)*cn;n.n0=center-span*cn;n.n1=n.n0+span}if(mode==='both'||mode==='story'){const span=(v.s1-v.s0)*factor,center=v.s0+(v.s1-v.s0)*cs;n.s0=center-span*cs;n.s1=n.s0+span}state.view=clampView(n);scheduleRender()}
@@ -1491,7 +1491,7 @@ setupReader();buildChars();buildLegend();render();
     for(const d of visible)drawMarker(marks,d,S,sc);
     const narrZoom=(FULL.n1-FULL.n0)/(state.view.n1-state.view.n0);
     document.getElementById('zoomReadout').textContent=`narrazione ×${narrZoom.toFixed(1)} · storia ×${storyZoom.toFixed(1)}`;
-    document.getElementById('chartStatus').textContent='';
+    {const status=document.getElementById('chartStatus');if(status&&!status.dataset.githubStatus)status.textContent=''}
     syncSwapAxesButton(S);
     if(activeResumeId)activateResume(activeResumeId);
     if(!reader.hidden&&currentReaderSegment){const hover=readerHoverIds.length?readerHoverIds:[currentReaderSegment.id];crossHighlight(hover,readerHoverIds.length?'reader-hover':'selection')}else if(crossIds.length)crossHighlight(crossIds,'graph');else drawCrossOverlay(crossIds);
@@ -1986,6 +1986,36 @@ function buildVisualizationData(raw, template){
 
   const INITIAL_TEMPLATE=DATA;
   const REMOTE_DATA_URL='https://raw.githubusercontent.com/Ggenoni/OF-time-narration/main/orlando_furioso.json';
+  const REMOTE_RETRY_DELAY_MS=15000;
+  const REMOTE_REQUEST_TIMEOUT_MS=12000;
+  let remoteRequestSerial=0;
+  let remoteRetryTimer=null;
+  let githubConnectionFailed=false;
+
+  function githubStatusElement(){return document.getElementById('chartStatus')}
+  function setGithubStatus(message,kind=''){
+    const el=githubStatusElement();if(!el)return;
+    el.textContent=message||'';
+    if(kind)el.dataset.githubStatus=kind;else delete el.dataset.githubStatus;
+  }
+  function clearGithubStatus(kind=null){
+    const el=githubStatusElement();if(!el)return;
+    if(kind&&el.dataset.githubStatus!==kind)return;
+    if(el.dataset.githubStatus){el.textContent='';delete el.dataset.githubStatus}
+  }
+  function showGithubConnectionError(detail=''){
+    githubConnectionFailed=true;
+    const suffix=detail?` (${detail})`:'';
+    setGithubStatus(`Impossibile stabilire la connessione con GitHub${suffix}. Nuovo tentativo automatico…`,'connection-error');
+  }
+  function markGithubReachable(){
+    githubConnectionFailed=false;
+    clearGithubStatus('connection-error');
+  }
+  function scheduleRemoteRetry(){
+    if(remoteRetryTimer)clearTimeout(remoteRetryTimer);
+    remoteRetryTimer=setTimeout(()=>{remoteRetryTimer=null;loadRemoteVisualizationData({silent:true})},REMOTE_RETRY_DELAY_MS);
+  }
 
   function resetDataCaches(){
     readerIndexReady=false;verseSegments.clear();timeExpressionSegments.clear();readerElementIndex=new Map();activeTextElements=[];currentTextElements=[];currentReaderSegment=null;readerHoverIds=[];crossIds=[];
@@ -2005,24 +2035,64 @@ function buildVisualizationData(raw, template){
     state.selected=new Set(DATA.defaults?.length?DATA.defaults:DATA.characters.slice(0,6).map(x=>x.name));legendFocus=null;state.legendFocusCharacter=null;state.order='lineare';state.uncertain=false;state.intervals=true;state.view={...FULL};
     document.getElementById('charSearch').value='';resetDataCaches();refreshReaderSelector();buildChars();buildLegend();render();
   }
-  async function loadRemoteVisualizationData(){
-    const chartStatus=document.getElementById('chartStatus');
-    if(chartStatus)chartStatus.textContent='Caricamento dati da GitHub…';
+  async function loadRemoteVisualizationData({silent=false}={}){
+    const requestId=++remoteRequestSerial;
+    if(remoteRetryTimer){clearTimeout(remoteRetryTimer);remoteRetryTimer=null}
+    if(!silent&&!githubConnectionFailed)setGithubStatus('Caricamento dati da GitHub…','loading');
+
+    if(navigator.onLine===false){
+      showGithubConnectionError('dispositivo offline');
+      scheduleRemoteRetry();
+      return;
+    }
+
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),REMOTE_REQUEST_TIMEOUT_MS);
+    let response;
     try{
-      const response=await fetch(`${REMOTE_DATA_URL}?t=${Date.now()}`,{cache:'no-store'});
-      if(!response.ok)throw new Error(`GitHub ha restituito HTTP ${response.status}`);
+      response=await fetch(`${REMOTE_DATA_URL}?t=${Date.now()}`,{cache:'no-store',signal:controller.signal});
+    }catch(err){
+      clearTimeout(timeout);
+      if(requestId!==remoteRequestSerial)return;
+      const detail=err?.name==='AbortError'?'timeout della richiesta':(err?.message||'errore di rete');
+      console.error('Connessione a GitHub non disponibile:',err);
+      showGithubConnectionError(detail);
+      scheduleRemoteRetry();
+      return;
+    }
+    clearTimeout(timeout);
+    if(requestId!==remoteRequestSerial)return;
+
+    /* Se GitHub ha risposto, la connessione esiste: da qui in poi eventuali
+       problemi riguardano la risposta o i dati, non la connessione. */
+    markGithubReachable();
+
+    if(!response.ok){
+      const message=`GitHub è raggiungibile, ma il dataset ha restituito HTTP ${response.status}.`;
+      console.error(message);
+      setGithubStatus(message,'data-error');
+      if(response.status===408||response.status===429||response.status>=500)scheduleRemoteRetry();
+      return;
+    }
+
+    try{
       const body=await response.text();
-      if(!body.trim())throw new Error('Il file orlando_furioso.json su GitHub è vuoto.');
-      let raw;try{raw=JSON.parse(body)}catch(e){throw new Error('Il file orlando_furioso.json su GitHub non contiene JSON valido.')}
+      if(!body.trim())throw new Error('Il file orlando_furioso.json è vuoto.');
+      let raw;try{raw=JSON.parse(body)}catch(e){throw new Error('Il file orlando_furioso.json non contiene JSON valido.')}
       window.__FURIOSO_RAW_SOURCE_DATA__=raw;
       const exportButton=document.getElementById('exportData');if(exportButton){exportButton.disabled=false;exportButton.dataset.tooltip='Scarica il dataset di segmenti narrativi ed espressioni temporali'}
       const next=raw?.annotations?.narrative?buildVisualizationData(raw,INITIAL_TEMPLATE):raw;
       applyVisualizationData(next);
+      clearGithubStatus();
     }catch(err){
-      console.error('Errore nel caricamento automatico del dataset da GitHub:',err);
-      if(chartStatus)chartStatus.textContent=`Impossibile caricare i dati da GitHub: ${err.message||err}`;
+      console.error('GitHub è raggiungibile, ma il dataset non può essere caricato:',err);
+      setGithubStatus(`Connessione a GitHub attiva, ma il dataset non può essere caricato: ${err?.message||err}`,'data-error');
     }
   }
+
+  window.addEventListener('online',()=>loadRemoteVisualizationData({silent:true}));
+  window.addEventListener('offline',()=>{showGithubConnectionError('dispositivo offline');scheduleRemoteRetry()});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&githubConnectionFailed)loadRemoteVisualizationData({silent:true})});
 
   rebuildNarrativeAxis();buildChars();buildLegend();render();
   loadRemoteVisualizationData();
