@@ -14,46 +14,6 @@ if ('scrollRestoration' in history) {
 window.addEventListener('load', () => {
   window.scrollTo(0, 0);
 });
-
-/* --- INIZIO SCRIPT BANNER CARICAMENTO --- */
-window.addEventListener('DOMContentLoaded', () => {
-  const overlay = document.getElementById('loading-overlay');
-  const testContainer = document.getElementById('loading-text');
-  const spinnerContainer = document.getElementById('spinner-container');
-  const counterEl = document.getElementById('loading-counter');
-
-  let seconds = 0;
-  
-  // Timer per aggiornare il contatore ogni secondo (1000 ms)
-  const timerInterval = setInterval(() => {
-    seconds++;
-    if (counterEl) {
-      counterEl.innerText = seconds;
-    }
-  }, 1000);
-
-  // Timer per l'errore dopo 1 minuto (60.000 ms)
-  const errorTimeout = setTimeout(() => {
-    clearInterval(timerInterval); // Ferma il conteggio dei secondi
-    if (overlay && overlay.style.display !== 'none') {
-      if (spinnerContainer) spinnerContainer.style.display = 'none'; // Nasconde rotellina e numero
-      // Messaggio a tema "Orlando Furioso"
-      testContainer.innerHTML = "GitHub non risponde, la connessione ai dati si è persa sulla Luna.<br><br>Riprova più tardi, grazie :)";
-      testContainer.style.color = "var(--warn)"; 
-    }
-  }, 5000);
-
-  // Da chiamare nel tuo codice quando i dati sono pronti
-  window.hideLoadingBanner = function() {
-    clearTimeout(errorTimeout); // Ferma il timer di errore
-    clearInterval(timerInterval); // Ferma il contatore dei secondi
-    if (overlay) {
-      overlay.style.opacity = '0';
-      setTimeout(() => overlay.style.display = 'none', 400); 
-    }
-  };
-});
-/* --- FINE SCRIPT BANNER CARICAMENTO --- */
 </script>
 
 <style>
@@ -76,78 +36,6 @@ label.top{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.
 .reader[hidden]{display:none}.reader{position:fixed;inset:0;z-index:100}.readerBackdrop{position:absolute;inset:0;background:rgba(20,25,30,.48);backdrop-filter:blur(2px)}.readerPanel{position:absolute;right:0;top:0;height:100%;width:min(620px,92vw);background:#fbfaf6;box-shadow:-16px 0 40px rgba(0,0,0,.22);display:grid;grid-template-rows:auto auto auto 1fr;overflow:hidden}.readerHeader{padding:18px 20px 11px;background:linear-gradient(135deg,#152f48,#315c78);color:#fff;display:flex;justify-content:space-between;gap:15px;align-items:flex-start}.readerHeader h2{font:500 25px/1.1 Georgia,serif;margin:2px 0 0}.readerEyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.1em;opacity:.78}.readerClose{font-size:28px;line-height:1;width:40px;height:40px;padding:0;border-color:rgba(255,255,255,.45);background:rgba(255,255,255,.1);color:#fff}.readerClose:hover{background:rgba(255,255,255,.2)}.readerMeta{display:flex;flex-wrap:wrap;gap:6px 14px;padding:10px 18px;background:#e9e5db;border-bottom:1px solid #d3cec3;color:#51565b}.readerMeta b{color:#17324d}.readerNav{display:grid;grid-template-columns:auto minmax(180px,1fr) auto;gap:8px;align-items:end;padding:10px 14px;border-bottom:1px solid #d8d3c9;background:#fff}.readerNav label span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#686d73;margin-bottom:3px}.readerText{overflow:auto;padding:8px 0 70px;scroll-behavior:smooth}.readerCantoBlock{max-width:760px;margin:0 auto;padding:10px 24px 30px}.readerCantoBlock h3{font:500 28px Georgia,serif;color:#17324d;margin:8px 0 19px;border-bottom:1px solid #d8d3c9;padding-bottom:8px}.stanza{position:relative;margin:0 0 19px;padding:8px 10px 8px 50px;border-radius:8px}.stanzaNo{position:absolute;left:8px;top:10px;color:#8b8172;font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace}.verse{display:grid;grid-template-columns:22px 1fr;gap:8px;font:17px/1.48 Georgia,serif}.verseNo{font:10px/2.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:#aaa096;text-align:right}.segmentHighlight{background:#fff2c9;box-shadow:inset 4px 0 #c38422}.verseHighlight>span:last-child{font-weight:600;color:#38260c}.readerOpen{overflow:hidden}
 @media(max-width:650px){.controls .zoomButtons{gap:7px}.readerPanel{top:auto;bottom:0;right:0;width:100%;height:min(92vh,900px);border-radius:18px 18px 0 0}.readerHeader{padding:14px 15px 9px}.readerHeader h2{font-size:21px}.readerMeta{padding:8px 13px;font-size:12px}.readerNav{padding:8px}.readerCantoBlock{padding:8px 12px 28px}.readerCantoBlock h3{font-size:24px}.stanza{padding-left:42px;margin-bottom:14px}.verse{font-size:16px}.tooltip{display:none}}
 </style>
-
-<style>
-/* --- INIZIO STILI BANNER CARICAMENTO --- */
-header {
-  position: relative; 
-  z-index: 1000; 
-}
-
-#loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  /* Trasparenza aumentata (0.65 invece di 0.85) */
-  background: rgba(243, 241, 235, 0.01); 
-  backdrop-filter: blur(4px); 
-  z-index: 999; 
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  transition: opacity 0.4s ease;
-}
-
-/* Contenitore per sovrapporre rotellina e numero */
-#spinner-container {
-  position: relative;
-  width: 56px;
-  height: 56px;
-  margin-bottom: 20px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-#loading-spinner {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border: 4px solid var(--line);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-#loading-counter {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; /* Stesso font usato nel sito */
-  font-size: 14px;
-  color: var(--accent);
-  font-weight: 400;
-  z-index: 2;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-#loading-text {
-  font-family: Georgia, serif;
-  font-size: 18px;
-  color: var(--accent);
-  font-weight: 500;
-  text-align: center;
-  padding: 0 20px;
-  line-height: 1.5;
-}
-/* --- FINE STILI BANNER CARICAMENTO --- */
-</style>
-
 <style id="visual-revision-v3">
 /* Revisione editoriale e data-visualization */
 :root{
@@ -521,15 +409,6 @@ body > header>h1,body > header>.subtitle{position:relative;z-index:1}
 </style>
 </head>
 <body>
-<!-- --- INIZIO BANNER CARICAMENTO --- -->
-<div id="loading-overlay">
-  <div id="spinner-container">
-    <div id="loading-spinner"></div>
-    <div id="loading-counter">0</div>
-  </div>
-  <p id="loading-text">Dati in caricamento...</p>
-</div>
-<!-- --- FINE BANNER CARICAMENTO --- -->
 <header><h1>Atlante cronologico del <em>Furioso</em></h1><p class="subtitle">Una mappa interattiva per visualizzare il rapporto tra il tempo della storia e l'ordine della narrazione nel poema.</p></header>
 <main>
 <div class="settingsBar">
