@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ggenoni.github.io/tempofurioso/sitemap.xml
